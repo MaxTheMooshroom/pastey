@@ -360,7 +360,7 @@ fn pasted_to_tokens(mut pasted: String, span: Span) -> Result<TokenStream> {
         token_mode = TokenMode::Str;
     }
 
-    let tt = match panic::catch_unwind(|| {
+    let Ok(tt) = panic::catch_unwind(|| {
         match token_mode {
             TokenMode::Default => {
                 TokenTree::Ident(Ident::new(&pasted, span))
@@ -378,14 +378,11 @@ fn pasted_to_tokens(mut pasted: String, span: Span) -> Result<TokenStream> {
                 TokenTree::Literal(Literal::string(&spasted))
             }
         }
-    }) {
-        Ok(tt) => tt,
-        Err(_) => {
-            return Err(Error::new(
-                span,
-                &format!("`{:?}` is not a valid identifier", pasted),
-            ));
-        }
+    }) else {
+        return Err(Error::new(
+            span,
+            &format!("`{:?}` is not a valid identifier", pasted),
+        ));
     };
 
     tokens.extend(iter::once(tt));
