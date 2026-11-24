@@ -289,6 +289,18 @@ pub(crate) fn paste(segments: &[Segment]) -> Result<String> {
                         }
                         evaluated.push(acc);
                     }
+                    "kebab" => {
+                        let mut acc = String::new();
+                        let mut prev = '-';
+                        for ch in last.chars() {
+                            if ch.is_uppercase() && prev != '-' {
+                                acc.push('-');
+                            }
+                            acc.push(ch);
+                            prev = ch;
+                        }
+                        evaluated.push(acc.to_lowercase());
+                    }
                     _ => {
                         return Err(Error::new2(
                             colon.span,

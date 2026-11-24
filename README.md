@@ -136,6 +136,7 @@ The `pastey` crate supports the following case modfiers:
 | `$var:camel` or `$var:upper_camel` | Upper Camel Case                      |
 | `$var:lower_camel`                 | Lower Camel Case [#4]                 |
 | `$var:camel_edge`                  | Covers Edge cases of Camel Case. [#3] |
+| `$var:kebab`                       | Kebab Case (only supports str mode)   |
 
 _**NOTE: The pastey crate is going to be a drop in replacement to paste crate,
 and will not change the behaviour of existing modifier like `lower`, `upper`,
@@ -243,7 +244,7 @@ use pastey::paste;
 macro_rules! define_const_str {
     ($name:ident) => {
         paste!{
-            const [< $name:snake:upper >]: &str = stringify!([< @ $name >]); // '@' signals a raw identifier
+            const [< $name:snake:upper >]: &str = stringify!([< @ $name:kebab >]); // '@' signals a raw identifier
         }
     }
 }
@@ -253,7 +254,7 @@ define_const_str!(thisIsButATest);
 
 fn test_fn() {
     assert_eq!(TEST, r#""test""#);
-    assert_eq!(THIS_IS_BUT_A_TEST, r#""thisIsButATest""#);
+    assert_eq!(THIS_IS_BUT_A_TEST, r#""this-is-but-a-test""#);
 }
 test_fn();
 ```

@@ -205,6 +205,29 @@ mod test_to_camel_edge {
     }
 }
 
+mod test_to_kebab {
+    use pastey::paste;
+
+    macro_rules! m {
+        ($id:ident) => {
+            paste! {
+                const DEFAULT_KEBAB: &str = [<@ $id:kebab>];
+                const LOWER_KEBAB: &str = [<@ $id:kebab:lower>];
+                const UPPER_KEBAB: &str = [<@ $id:kebab:upper>];
+            }
+        };
+    }
+
+    m!(ThisIsButATest);
+
+    #[test]
+    fn test_to_kebab() {
+        assert_eq!(DEFAULT_KEBAB, "this-is-but-a-test");
+        assert_eq!(LOWER_KEBAB, "this-is-but-a-test");
+        assert_eq!(UPPER_KEBAB, "THIS-IS-BUT-A-TEST");
+    }
+}
+
 mod test_doc_expr {
     // https://github.com/dtolnay/paste/issues/29
 
