@@ -342,6 +342,27 @@ mod test_raw_mode {
     }
 }
 
+mod test_str_mode {
+    use pastey::paste;
+
+    macro_rules! m{
+        ($name:ident) => {
+            paste!{
+                const [< $name:snake:upper >]: &str = stringify!([<@ $name>]);
+            }
+        }
+    }
+
+    m!(test);
+    m!(thisIsButATest);
+
+    #[test]
+    fn test_str_mode() {
+        assert_eq!(TEST, r#""test""#);
+        assert_eq!(THIS_IS_BUT_A_TEST, r#""thisIsButATest""#);
+    }
+}
+
 mod test_join {
     use pastey::paste;
 

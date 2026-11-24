@@ -321,8 +321,16 @@ fn parse_bracket_as_segments(input: TokenStream, scope: Span) -> Result<Vec<Segm
     Ok(segments)
 }
 
+#[derive(Default)]
+enum TokenMode {
+    #[default]
+    Default,
+    Raw,
+    Str,
+}
+
 fn pasted_to_tokens(mut pasted: String, span: Span) -> Result<TokenStream> {
-    let mut raw_mode = false;
+    let mut token_mode = TokenMode::default();
     let mut tokens = TokenStream::new();
 
     if pasted.starts_with(|ch: char| ch.is_ascii_digit()) {
@@ -347,20 +355,31 @@ fn pasted_to_tokens(mut pasted: String, span: Span) -> Result<TokenStream> {
     }
 
     if pasted.starts_with("r#") {
-        raw_mode = true;
+        token_mode = TokenMode::Raw;
+    } else if pasted.starts_with("s#") {
+        token_mode = TokenMode::Str;
     }
 
-    let ident = match panic::catch_unwind(|| {
-        if raw_mode {
-            let mut spasted = pasted.clone();
-            spasted.remove(0);
-            spasted.remove(0);
-            Ident::new_raw(&spasted, span)
-        } else {
-            Ident::new(&pasted, span)
+    let tt = match panic::catch_unwind(|| {
+        match token_mode {
+            TokenMode::Default => {
+                TokenTree::Ident(Ident::new(&pasted, span))
+            }
+            TokenMode::Raw => {
+                let mut spasted = pasted.clone();
+                spasted.remove(0);
+                spasted.remove(0);
+                TokenTree::Ident(Ident::new_raw(&spasted, span))
+            }
+            TokenMode::Str => {
+                let mut spasted = pasted.clone();
+                spasted.remove(0);
+                spasted.remove(0);
+                TokenTree::Literal(Literal::string(&spasted))
+            }
         }
     }) {
-        Ok(ident) => TokenTree::Ident(ident),
+        Ok(tt) => tt,
         Err(_) => {
             return Err(Error::new(
                 span,
@@ -369,7 +388,7 @@ fn pasted_to_tokens(mut pasted: String, span: Span) -> Result<TokenStream> {
         }
     };
 
-    tokens.extend(iter::once(ident));
+    tokens.extend(iter::once(tt));
     Ok(tokens)
 }
 
@@ -558,7 +577,7 @@ mod doc_tests {
 
     /// ```compile_fail
     /// use pastey::paste;
-    /// paste! { const _: &str = [<@invalid>]; }
+    /// paste! { const _: &str = [<%invalid>]; }
     /// ```
     fn test_error_invalid_identifier_special_char() {}
 
@@ -814,7 +833,7 @@ mod doc_tests {
 
     /// ```compile_fail
     /// use pastey::paste;
-    /// paste! { fn doc_err_in_brace() { let _ = [<@>]; } }
+    /// paste! { fn doc_err_in_brace() { let _ = [<%>]; } }
     /// ```
     fn test_error_invalid_paste_inside_brace_group() {}
 

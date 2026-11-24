@@ -231,6 +231,33 @@ fn test_fn() {
 test_fn();
 ```
 
+## String Literal Generation
+
+`pastey` now supports generating string literals using a special str mode. By
+prefixing a token with `@` inside the paste syntax, it treats that token as a
+string literal.
+
+```rust
+use pastey::paste;
+
+macro_rules! define_const_str {
+    ($name:ident) => {
+        paste!{
+            const [< $name:snake:upper >]: &str = stringify!([< @ $name >]); // '@' signals a raw identifier
+        }
+    }
+}
+
+define_const_str!(test);
+define_const_str!(thisIsButATest);
+
+fn test_fn() {
+    assert_eq!(TEST, r#""test""#);
+    assert_eq!(THIS_IS_BUT_A_TEST, r#""thisIsButATest""#);
+}
+test_fn();
+```
+
 ## Pasting documentation strings
 
 Within the `paste!` macro, arguments to a #\[doc ...\] attribute are implicitly

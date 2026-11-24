@@ -134,6 +134,10 @@ pub(crate) fn parse(tokens: &mut Peekable<token_stream::IntoIter>) -> Result<Vec
                     value: "#".to_string(),
                     span: punct.span(),
                 })),
+                '@' => segments.push(Segment::String(LitStr {
+                    value: "@".to_string(),
+                    span: punct.span(),
+                })),
                 _ => return Err(Error::new(punct.span(), "unexpected punct")),
             },
             TokenTree::Group(group) => {
@@ -171,6 +175,19 @@ pub(crate) fn paste(segments: &[Segment]) -> Result<String> {
                         "`#` is reserved keyword and it enables the raw mode \
                             (i.e. generate Raw Identifiers) and it is only allowed in \
                             the beginning like `[< # ... >]`",
+                    ));
+                }
+                if segment.value.as_str() == "@" {
+                    if i == 0 {
+                        // Enable Str mode
+                        evaluated.push(String::from("s#"));
+                        continue;
+                    }
+                    return Err(Error::new(
+                        segment.span,
+                        "`@` is reserved keyword and it enables the str mode \
+                            (i.e. generate string literals) and it is only allowed in \
+                            the beginning like `[< @ ... >]`",
                     ));
                 }
                 evaluated.push(segment.value.clone());
